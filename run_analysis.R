@@ -51,3 +51,6 @@ loadAllMeasures <- function(limrow=-1) {
   allMeas <- rbind(trainSet,testSet)
   allMeas
 }
+
+allMeas<-loadAllMeasures(lim=1000)
+selectMeas<-allMeas[grep("((mean|std)\\(\\))|Subj|Label",names(allMeas))]
