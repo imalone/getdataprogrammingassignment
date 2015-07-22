@@ -1,46 +1,53 @@
 # Load the data for the measName directory and combine
 # label and subject columns
-loadMeasure <- function (measName, featuresList) {
+loadMeasure <- function (measName, featuresList, limrow=-1) {
   #Name pattern:
   #  train/X_train.txt
   #  train/y_train.txt
   #  train/subject_train.txt
-  dataFile <- file.path(measName,paste("X_",measName,".txt",sep=""))
-  labelFile <- file.path(measName,paste("y_",measName,".txt",sep=""))
-  subjFile <- file.path(measName,"subject_train.txt")
-
-  meas<-read.table(dataFile)
-  measLabel<-read.table(labelFile)
-  measSubj<-read.table(subjFile)
-  
-  if (length(measLabel) != nrow(meas)) {
-    stop(meas," number of label rows didn't match")
+  getPath <- function(...) {
+    file.path(measName,paste(...,sep=""))
   }
-  if (length(measSubj) != nrow(meas)) {
-    stop(meas," number of subject rows didn't match")
+  print(paste("Loading", measName))
+  dataFile <- getPath("X_",measName,".txt")
+  labelFile <- getPath("y_",measName,".txt")
+  subjFile <- getPath("subject_",measName,".txt")
+
+  meas<-read.table(dataFile, nrow=limrow)
+  measLabel<-read.table(labelFile, nrow=limrow)
+  measSubj<-read.table(subjFile, nrow=limrow)
+  
+  if (nrow(measLabel) != nrow(meas)) {
+    stop(measName," number of label rows didn't match")
+  }
+  if (nrow(measSubj) != nrow(meas)) {
+    stop(measName," number of subject rows didn't match")
   }
   
   if ( ncol(meas) != nrow(featuresList)) {
-    stop (meas, " number of columns doesn't match features.txt entries")
+    stop (measName, " number of columns doesn't match features.txt entries")
   }
   names(meas)<-featuresList[,"name"]  
   
-  measSubset$Label <- trainLabel
-  measSubset$Subj <- trainSubj
+  meas$Label <- measLabel[,1]
+  meas$Subj <- measSubj[,1]
+  print(paste("Loaded", measName))
   meas
 }
 
 
 # Load all measurement data, bind feature names
-loadAllMeasures <- function() {
+loadAllMeasures <- function(limrow=-1) {
   # Load the features list, don't turn names into factors
   featuresList <- read.table("features.txt",as.is=2)
   names(featuresList) <- c("id","name")
   
-  trainSet <- loadMeasure("train",featuresList)
-  testSet  <- loadMeasure("test",featuresList)
+  trainSet <- loadMeasure("train",featuresList,limrow=limrow)
+  testSet  <- loadMeasure("test",featuresList,limrow=limrow)
   # Don't need to check trainSet, testSet columns separately
   # as already compared against featuresList
   
-  rbind(trainSet,testSet)
+  print("Combining data")
+  allMeas <- rbind(trainSet,testSet)
+  allMeas
 }
