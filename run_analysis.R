@@ -52,5 +52,21 @@ loadAllMeasures <- function(limrow=-1) {
   allMeas
 }
 
-allMeas<-loadAllMeasures(lim=1000)
-selectMeas<-allMeas[grep("((mean|std)\\(\\))|Subj|Label",names(allMeas))]
+loadSelectedMeasures <- function(limrow=-1) {
+  allMeas<-loadAllMeasures(lim=1000)
+  selectMeas<-allMeas[grep("((mean|std)\\(\\))|Subj|Label",names(allMeas))]
+}
+
+## Raw code to demo name tidy, group_by and summarise
+selMeas<-loadSelectedMeasures(lim=1000)
+library(dplyr)
+selMeas2<-selMeas
+names(selMeas2)<-gsub("-mean\\(\\)",".mean",names(selMeas2))
+names(selMeas2)<-gsub("-std\\(\\)",".std",names(selMeas2))
+groupMeas<-group_by(selMeas2,Label,Subj)
+summarise(groupMeas,mean(fBodyBodyGyroMag.std))
+## ... just need to properly tidy variables and report all
+## fields
+## Strictly speaking Label and Subj should be factors and
+## names could be changed to Activity and Subject, Activity
+## levels names should be descriptive text.
