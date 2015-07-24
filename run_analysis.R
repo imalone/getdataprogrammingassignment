@@ -10,15 +10,15 @@ loadMeasure <- function (measName, featuresList, limrow=-1) {
   }
   print(paste("Loading", measName))
   dataFile <- getPath("X_",measName,".txt")
-  labelFile <- getPath("y_",measName,".txt")
+  activityFile <- getPath("y_",measName,".txt")
   subjFile <- getPath("subject_",measName,".txt")
 
   meas<-read.table(dataFile, nrow=limrow)
-  measLabel<-read.table(labelFile, nrow=limrow)
+  measActivity<-read.table(activityFile, nrow=limrow)
   measSubj<-read.table(subjFile, nrow=limrow)
   
-  if (nrow(measLabel) != nrow(meas)) {
-    stop(measName," number of label rows didn't match")
+  if (nrow(measActivity) != nrow(meas)) {
+    stop(measName," number of label/activity rows didn't match")
   }
   if (nrow(measSubj) != nrow(meas)) {
     stop(measName," number of subject rows didn't match")
@@ -29,8 +29,8 @@ loadMeasure <- function (measName, featuresList, limrow=-1) {
   }
   names(meas)<-featuresList[,"name"]  
   
-  meas$Label <- measLabel[,1]
-  meas$Subj <- measSubj[,1]
+  meas$Activity <- measActivity[,1]
+  meas$Subject <- measSubj[,1]
   print(paste("Loaded", measName))
   meas
 }
@@ -40,6 +40,7 @@ loadMeasure <- function (measName, featuresList, limrow=-1) {
 loadAllMeasures <- function(limrow=-1) {
   # Load the features list, don't turn names into factors
   featuresList <- read.table("features.txt",as.is=2)
+  activitiesList <- read.table("activity_labels.txt")
   names(featuresList) <- c("id","name")
   
   trainSet <- loadMeasure("train",featuresList,limrow=limrow)
@@ -49,24 +50,55 @@ loadAllMeasures <- function(limrow=-1) {
   
   print("Combining data")
   allMeas <- rbind(trainSet,testSet)
+
+  # Set up factors, do this after merging data so all
+  # subject levels are present
+  allMeas$Activity = as.factor(allMeas$Activity)
+  levels(allMeas$Activity)<-activitiesList[,2]
+  allMeas$Subject = as.factor(allMeas$Subject)
+
   allMeas
 }
 
+
 loadSelectedMeasures <- function(limrow=-1) {
   allMeas<-loadAllMeasures(lim=1000)
-  selectMeas<-allMeas[grep("((mean|std)\\(\\))|Subj|Label",names(allMeas))]
+  # Get only mean(), std() and the factor labels
+  selectMeas<-allMeas[grep("((mean|std)\\(\\))|Subject|Activity",names(allMeas))]
+  # Remove unfriendly - and () characters
+  names(selectMeas)<-gsub("-(mean|std)\\(\\)",".\\1",names(selectMeas))
+  selectMeas
 }
+
 
 ## Raw code to demo name tidy, group_by and summarise
 selMeas<-loadSelectedMeasures(lim=1000)
 library(dplyr)
 selMeas2<-selMeas
-names(selMeas2)<-gsub("-mean\\(\\)",".mean",names(selMeas2))
-names(selMeas2)<-gsub("-std\\(\\)",".std",names(selMeas2))
+
 groupMeas<-group_by(selMeas2,Label,Subj)
 summarise(groupMeas,mean(fBodyBodyGyroMag.std))
 ## ... just need to properly tidy variables and report all
 ## fields
-## Strictly speaking Label and Subj should be factors and
-## names could be changed to Activity and Subject, Activity
-## levels names should be descriptive text.
+allMeas<-selMeas2
+
+# Make certain substitutions on the variable names to
+# make them more friendly. First set up the list of substitutions
+# as columns in a matrix
+gsubmaps <- matrix(
+  nrow = 2,
+  data = c(
+    "BodyBody", "Body", # Fix double-Body typo
+    "AccJerk", ".Linear.Jerk",
+    "Gyro(?!Jerk)", ".Gyroscope", # Perl-type regex
+    "GyroJerk", ".Gyroscope.Jerk",
+    "Acc", ".Linear.Acceleration",
+    "Mag", ".Magnitude"
+  )
+)
+# Then use apply to run gsub on each column in turn,
+# <<- operator refers back to allMeas names in outer
+# scope.
+apply(gsubmaps,2,function(x){
+  names(allMeas)<<-gsub(x[1],x[2],names(allMeas),perl = TRUE)
+})
