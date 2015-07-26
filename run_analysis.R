@@ -5,6 +5,8 @@ loadMeasure <- function (measName, dataDir, featuresList, limrow=-1) {
   #  train/X_train.txt
   #  train/y_train.txt
   #  train/subject_train.txt
+  # getPath(), pastes together arguments and returns full
+  # path to file name
   getPath <- function(...) {
     file.path(dataDir,measName,paste(...,sep=""))
   }
