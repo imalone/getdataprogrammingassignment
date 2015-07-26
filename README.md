@@ -6,7 +6,7 @@ Repository for Coursera [Getting and Cleaning Data][gettingandcleaning] course a
     This readme
 * run_analysis.R
     R script to compile data to tidy format 
-* CodeBook.md **todo**
+* CodeBook.md 
     Data code book.
     
 ## run_analysis.R
