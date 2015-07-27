@@ -140,5 +140,12 @@ The final data has 68 columns: Subject and Activity labels (2) and average featu
     - average of frequency domain gyroscope jerk (time derivative)
       magnitude measure
 
+### Addendum post submission deadline: Variable names
+I've just found out that in the week 4 lectures the instructors take against "." in
+variable names, despite using them earlier in the course. The assignment deadline
+was at the end of week 3, so please take that into account if you want to object
+to my choice of naming while marking. As you can see in the code it would have been
+simple not to put these in.
+
 [ucilink]:http://archive.ics.uci.edu/ml/datasets/Human+Activity+Recognition+Using+Smartphones
 [wide]:https://class.coursera.org/getdata-030/forum/thread?thread_id=107
